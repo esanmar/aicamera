@@ -95,11 +95,12 @@ class VLMService {
             const rawImg = new RawImage(frame.data, frame.width, frame.height, 4);
 
             // Prepare messages for the model
-            {
-                role: 'system',
+            const messages = [
+                {
+                    role: 'system',
                     content: 'Eres un asistente de IA visual útil. Responde de manera concisa y precisa a la consulta del usuario en una frase en español.'
-            },
-            { role: 'user', content: `<image>${instruction}` }
+                },
+                { role: 'user', content: `<image>${instruction}` }
             ];
 
             const prompt = this.processor.apply_chat_template(messages, {
