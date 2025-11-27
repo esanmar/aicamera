@@ -24,6 +24,7 @@ class SpeechService {
             this.recognition.lang = this.language;
 
             this.recognition.onresult = (event) => {
+                console.log('Speech recognition result event:', event);
                 let finalTranscript = '';
                 let interimTranscript = '';
 
@@ -35,12 +36,15 @@ class SpeechService {
                     }
                 }
 
+                console.log('Transcripts:', { final: finalTranscript, interim: interimTranscript });
+
                 if (this.onResultCallback) {
                     this.onResultCallback({ final: finalTranscript, interim: interimTranscript });
                 }
             };
 
             this.recognition.onend = () => {
+                console.log('Speech recognition ended');
                 this.isListening = false;
                 if (this.onEndCallback) {
                     this.onEndCallback();
@@ -57,8 +61,12 @@ class SpeechService {
     }
 
     startListening(onResult, onEnd) {
+        console.log('Starting listening...');
         if (!this.recognition) return;
-        if (this.isListening) return;
+        if (this.isListening) {
+            console.log('Already listening');
+            return;
+        }
 
         this.onResultCallback = onResult;
         this.onEndCallback = onEnd;
@@ -66,6 +74,7 @@ class SpeechService {
         try {
             this.recognition.start();
             this.isListening = true;
+            console.log('Recognition started');
         } catch (e) {
             console.error('Failed to start recognition:', e);
         }
