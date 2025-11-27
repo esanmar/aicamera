@@ -36,12 +36,12 @@ export function createWelcomeScreen(onStart) {
 
     const title = createElement('h1', {
         className: 'text-4xl font-bold mb-2 text-black',
-        text: 'CCASA Online Video Análisis'
+        text: 'Agente Conversacional Multimodal'
     });
 
     const subtitle = createElement('p', {
         className: 'text-lg text-[#666666]',
-        html: `Análisis de vídeo en tiempo real con 
+        html: `Agente conversacional con entrada de voz y video, impulsado por 
             <a href="https://huggingface.co/onnx-community/FastVLM-0.5B-ONNX"
                class="underline text-[#CC0000] hover:opacity-80"
                target="_blank"
@@ -78,7 +78,7 @@ export function createWelcomeScreen(onStart) {
 
     const statusText = createElement('p', {
         className: 'font-medium text-[#CC0000]',
-        text: 'Cámara lista'
+        text: 'Cámara lista para la conversación'
     });
 
     statusFlex.appendChild(statusDot);
@@ -99,7 +99,7 @@ export function createWelcomeScreen(onStart) {
 
     const howItWorksTitle = createElement('h2', {
         className: 'text-lg font-semibold mb-4 text-center text-black',
-        text: 'Cómo funciona:',
+        text: 'Cómo funciona el Agente:',
         attributes: { id: 'how-it-works-title' }
     });
 
@@ -117,7 +117,7 @@ export function createWelcomeScreen(onStart) {
     });
     const step1Text = createElement('p', {
         className: 'text-[#666666]',
-        html: `Vas a cargar un modelo multimodal que se ejecuta en tu navegador.`
+        html: `Se cargará un modelo multimodal (VLM) y se usará el reconocimiento de voz de tu navegador.`
     });
     step1.appendChild(badge1);
     step1.appendChild(step1Text);
@@ -135,7 +135,7 @@ export function createWelcomeScreen(onStart) {
     });
     const hfIcon = createHfIcon();
     step2Text.innerHTML = `
-        Todo se ejecuta localmente 
+        Todo el procesamiento de video se ejecuta localmente. La conversación se simula en el navegador. 
         No se envían datos a ningún servidor.`;
     step2Text.insertBefore(hfIcon, step2Text.firstChild.nextSibling);
     step2.appendChild(badge2);
@@ -175,14 +175,14 @@ export function createWelcomeScreen(onStart) {
         children: [
             createElement('span', {
                 className: 'font-semibold text-lg',
-                text: 'Iniciar análisis'
+                text: 'Iniciar Conversación'
             })
         ]
     });
 
     const hint = createElement('p', {
         className: 'text-sm text-[#666666] opacity-80',
-        text: 'El modelo se cargará cuando pulses el botón'
+        text: 'El modelo VLM se cargará cuando pulses el botón'
     });
 
     buttonContainer.appendChild(startButton);

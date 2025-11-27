@@ -7,6 +7,7 @@ import { createElement } from '../utils/dom-helpers.js';
 import { createDraggableContainer } from './DraggableContainer.js';
 import { createLiveCaption } from './LiveCaption.js';
 import vlmService from '../services/vlm-service.js';
+import llmService from '../services/llm-service.js';
 import speechService from '../services/speech-service.js';
 import { PROMPTS } from '../utils/constants.js';
 
@@ -89,40 +90,54 @@ export function createCaptioningView(videoElement) {
         children: [liveCaptionComponent]
     });
 
-    // Interaction Logic
-    async function processInteraction(text) {
+    // Interaction Logic (Conversational Agent)
+    async function processInteraction(userPrompt) {
         if (isProcessing) return;
         isProcessing = true;
         micButton.classList.add('processing');
         micButton.classList.remove('listening');
 
-        liveCaptionComponent.updateCaption(`Usuario: ${text}`, false);
+        liveCaptionComponent.updateCaption(`Tú: ${userPrompt}\nAgente: Analizando...`, false);
 
         try {
-            // Capture frame and run inference
+            // 1. Get Visual Context from VLM
+            let vlmContext = 'No se pudo obtener contexto visual.';
             if (videoElement && videoElement.readyState >= 2) {
-                const result = await vlmService.runInference(
+                const vlmInstruction = 'Describe lo que ves en una frase corta en español.';
+                vlmContext = await vlmService.runInference(
                     videoElement,
-                    text, // Use spoken text as prompt
-                    (streamedText) => {
-                        // Optional: Show streaming response
-                    }
+                    vlmInstruction,
+                    () => {} // No streaming needed for context
                 );
-
-                if (result) {
-                    liveCaptionComponent.updateCaption(`IA: ${result}`, false);
-                    speechService.speak(result, () => {
-                        // After speaking, maybe listen again?
-                        // For now, let user click to speak again
-                    });
-                }
             }
+
+            // 2. Generate Combined Prompt for LLM
+            const combinedPrompt = `Contexto visual: ${vlmContext}. Pregunta del usuario: ${userPrompt}`;
+            console.log("Combined Prompt for LLM:", combinedPrompt);
+            
+            liveCaptionComponent.updateCaption(`Tú: ${userPrompt}\nAgente: Pensando...`, false);
+
+            // 3. Generate Conversational Response from LLM
+            const agentResponse = await llmService.generateResponse(combinedPrompt);
+
+            // 4. Update UI and Speak
+            liveCaptionComponent.updateCaption(`Tú: ${userPrompt}\nAgente: ${agentResponse}`, false);
+            
+            speechService.speak(agentResponse, () => {
+                // 5. Finished speaking, ready for next interaction
+                isProcessing = false;
+                micButton.classList.remove('processing');
+                liveCaptionComponent.updateCaption(`Tú: ${userPrompt}\nAgente: ${agentResponse}\n\nPulsa el micrófono para hablar.`, false);
+            });
+
         } catch (error) {
-            console.error('Error processing:', error);
-            liveCaptionComponent.showError('Error al procesar');
-        } finally {
-            isProcessing = false;
-            micButton.classList.remove('processing');
+            console.error('Error processing conversation:', error);
+            const errorMessage = 'Error en la conversación. Inténtalo de nuevo.';
+            liveCaptionComponent.showError(errorMessage);
+            speechService.speak(errorMessage, () => {
+                isProcessing = false;
+                micButton.classList.remove('processing');
+            });
         }
     }
 
@@ -149,33 +164,64 @@ export function createCaptioningView(videoElement) {
                     // On end (silence or stop)
                     micButton.classList.remove('listening');
                     // We need to get the final text. 
-                    // The speech service callback architecture might need a slight tweak to pass final text on end, 
-                    // or we rely on the last final result from onResult.
-                    // Let's assume the last onResult gave us the text.
-                    // Actually, let's modify the flow:
-                    // The onResult provides the text. If it's final, we process it.
+                    // The logic for processing the final text is now handled by the modified speechService.startListening
+                    // which calls processInteraction(res.final) when a final result is received.
                 }
             );
         }
     });
 
-    // Modify SpeechService usage in the click handler slightly
-    // We need to capture the text to process it.
-    let lastRecognizedText = '';
+    // The original project had a complex way of handling STT.
+    // We will simplify the mic button click handler to just start/stop listening.
+    // The `speech-service.js` already handles passing final/interim results to the onResult callback.
+    // We will use a local variable to capture the final text.
+    let finalTranscript = '';
 
-    const originalStartListening = speechService.startListening.bind(speechService);
-    speechService.startListening = (onResult, onEnd) => {
-        lastRecognizedText = '';
-        originalStartListening((res) => {
-            if (res.final) {
-                lastRecognizedText = res.final;
-                // If we want to stop immediately after one sentence:
-                speechService.stopListening();
-                processInteraction(res.final);
+    // Mic Button Click Handler
+    micButton.addEventListener('click', () => {
+        if (isProcessing) return;
+
+        if (speechService.isListening) {
+            speechService.stopListening();
+            micButton.classList.remove('listening');
+            // If stopped manually, process whatever was transcribed
+            if (finalTranscript) {
+                processInteraction(finalTranscript);
+                finalTranscript = ''; // Reset
             }
-            onResult(res);
-        }, onEnd);
-    };
+        } else {
+            // Stop speaking if currently speaking
+            speechService.synthesis.cancel();
+
+            micButton.classList.add('listening');
+            liveCaptionComponent.updateCaption('Escuchando...', true);
+            finalTranscript = ''; // Reset
+
+            speechService.startListening(
+                (result) => {
+                    // On partial/final result
+                    const currentText = result.interim || result.final;
+                    liveCaptionComponent.updateCaption(`Tú: ${currentText}`, false);
+                    if (result.final) {
+                        finalTranscript = result.final;
+                        // The service is configured to stop after one sentence (continuous=false),
+                        // so the onEnd will fire shortly after a final result.
+                    }
+                },
+                () => {
+                    // On end (silence or stop)
+                    micButton.classList.remove('listening');
+                    if (finalTranscript) {
+                        // Process the final transcript
+                        processInteraction(finalTranscript);
+                        finalTranscript = ''; // Reset
+                    } else {
+                        liveCaptionComponent.updateCaption('No se detectó voz. Pulsa el micrófono para hablar.', false);
+                    }
+                }
+            );
+        }
+    });
 
 
     // Assemble
@@ -192,6 +238,9 @@ export function createCaptioningView(videoElement) {
         }
         style.remove();
     };
+
+    // Initial message
+    liveCaptionComponent.updateCaption('Pulsa el micrófono para comenzar la conversación.', false);
 
     return container;
 }

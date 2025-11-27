@@ -59,15 +59,17 @@ class VLMService {
     }
 
     async runInference(video, instruction, onTextUpdate) {
-        if (this.inferenceLock) {
-            console.log('Inference already running, skipping frame');
-            return '';
-        }
+        // No longer using inferenceLock for the conversational agent flow
+        // The main loop will manage concurrency
+        // if (this.inferenceLock) {
+        //     console.log('Inference already running, skipping frame');
+        //     return '';
+        // }
 
-        this.inferenceLock = true;
+        // this.inferenceLock = true;
 
         if (!this.processor || !this.model) {
-            this.inferenceLock = false;
+            // this.inferenceLock = false;
             throw new Error('Model/processor not loaded');
         }
 
@@ -93,12 +95,11 @@ class VLMService {
             const rawImg = new RawImage(frame.data, frame.width, frame.height, 4);
 
             // Prepare messages for the model
-            const messages = [
-                {
-                    role: 'system',
+            {
+                role: 'system',
                     content: 'Eres un asistente de IA visual útil. Responde de manera concisa y precisa a la consulta del usuario en una frase en español.'
-                },
-                { role: 'user', content: `<image>${instruction}` }
+            },
+            { role: 'user', content: `<image>${instruction}` }
             ];
 
             const prompt = this.processor.apply_chat_template(messages, {
@@ -133,10 +134,10 @@ class VLMService {
                 { skip_special_tokens: true }
             );
 
-            this.inferenceLock = false;
+            // this.inferenceLock = false;
             return decoded[0].trim();
         } catch (error) {
-            this.inferenceLock = false;
+            // this.inferenceLock = false;
             throw error;
         }
     }

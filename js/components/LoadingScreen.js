@@ -32,7 +32,7 @@ export function createLoadingScreen(onComplete) {
 
     const title = createElement('h2', {
         className: 'text-2xl font-bold text-gray-100',
-        text: 'Loading AI Model'
+        text: 'Cargando Modelo de IA'
     });
 
     const stepText = createElement('p', {
@@ -57,7 +57,7 @@ export function createLoadingScreen(onComplete) {
 
     const progressPercentText = createElement('p', {
         className: 'text-sm text-gray-500',
-        text: '0% complete'
+        text: '0% completado'
     });
 
     progressSection.appendChild(progressBarContainer);
@@ -79,10 +79,10 @@ export function createLoadingScreen(onComplete) {
     function updateUI() {
         stepText.textContent = currentStep;
         progressBarFill.style.width = progress + '%';
-        progressPercentText.textContent = Math.round(progress) + '% complete';
+        progressPercentText.textContent = Math.round(progress) + '% completado';
 
         if (isError) {
-            title.textContent = 'Loading Failed';
+            title.textContent = 'Fallo en la Carga';
             stepText.className = 'text-red-400';
             container.style.background = GLASS_EFFECTS.COLORS.ERROR_BG;
         }
@@ -91,12 +91,12 @@ export function createLoadingScreen(onComplete) {
     // Load model
     setTimeout(async () => {
         try {
-            currentStep = 'Checking WebGPU support...';
+            currentStep = 'Comprobando soporte WebGPU...';
             progress = 5;
             updateUI();
 
             if (!navigator.gpu) {
-                currentStep = 'WebGPU not available in this browser';
+                currentStep = 'WebGPU no está disponible en este navegador';
                 isError = true;
                 updateUI();
 
@@ -117,7 +117,7 @@ export function createLoadingScreen(onComplete) {
 
                 const reloadButton = createElement('button', {
                     className: 'px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors',
-                    text: 'Reload Page'
+                    text: 'Recargar Página'
                 });
                 reloadButton.addEventListener('click', () => window.location.reload());
                 content.appendChild(reloadButton);
@@ -139,7 +139,7 @@ export function createLoadingScreen(onComplete) {
                 updateUI();
             });
 
-            currentStep = 'Ready to start!';
+            currentStep = '¡Listo para empezar!';
             progress = 100;
             updateUI();
 
@@ -169,7 +169,7 @@ export function createLoadingScreen(onComplete) {
 
             const reloadButton = createElement('button', {
                 className: 'px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors',
-                text: 'Reload Page'
+                text: 'Recargar Página'
             });
             reloadButton.addEventListener('click', () => window.location.reload());
             content.appendChild(reloadButton);

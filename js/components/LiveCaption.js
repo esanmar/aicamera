@@ -18,7 +18,7 @@ export function createLiveCaption() {
 
     const label = createElement('p', {
         className: 'text-sm font-semibold text-gray-200 mb-2',
-        text: 'Live Caption:'
+        text: 'Agente Conversacional:'
     });
 
     const captionText = createElement('p', {
@@ -41,6 +41,10 @@ export function createLiveCaption() {
         }
 
         removeClass(captionText, 'live-caption-error');
+    };
+
+    container.getCaption = () => {
+        return captionText.textContent;
     };
 
     container.showError = (errorMessage) => {

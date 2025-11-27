@@ -51,8 +51,8 @@ export const PROMPTS = {
         '¿Qué emociones o acciones se están representando?',
         'Nombra el objeto que tengo en la mano.'
     ],
-    fallbackCaption: 'Esperando primera respuesta...',
-    processingMessage: 'Iniciando análisis...'
+    fallbackCaption: 'Pulsa el micrófono para comenzar la conversación.',
+    processingMessage: 'Analizando...'
 };
 
 // Model configuration
