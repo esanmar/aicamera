@@ -6,7 +6,6 @@
 class SpeechService {
     constructor() {
         this.recognition = null;
-        this.synthesis = window.speechSynthesis;
         this.isListening = false;
         this.onResultCallback = null;
         this.onEndCallback = null;
@@ -86,27 +85,57 @@ class SpeechService {
         this.isListening = false;
     }
 
-    speak(text, onEnd) {
-        if (!this.synthesis) return;
+    async speak(text, onEnd) {
+        console.log('Speaking:', text);
 
-        // Cancel any current speech
-        this.synthesis.cancel();
+        try {
+            // Call the TTS API
+            const response = await fetch('/api/tts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: text,
+                    voiceName: 'Kora' // Spanish female voice
+                })
+            });
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = this.language;
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('TTS API error:', error);
+                throw new Error(error.error || 'Failed to generate speech');
+            }
 
-        // Try to find a Spanish voice
-        const voices = this.synthesis.getVoices();
-        const spanishVoice = voices.find(voice => voice.lang.includes('es'));
-        if (spanishVoice) {
-            utterance.voice = spanishVoice;
-        }
+            const data = await response.json();
 
-        utterance.onend = () => {
+            // Convert base64 to audio and play
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioData = atob(data.audio);
+            const arrayBuffer = new ArrayBuffer(audioData.length);
+            const view = new Uint8Array(arrayBuffer);
+
+            for (let i = 0; i < audioData.length; i++) {
+                view[i] = audioData.charCodeAt(i);
+            }
+
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+
+            source.onended = () => {
+                console.log('Audio finished playing');
+                if (onEnd) onEnd();
+            };
+
+            source.start(0);
+            console.log('Playing audio...');
+
+        } catch (error) {
+            console.error('Error in speak:', error);
             if (onEnd) onEnd();
-        };
-
-        this.synthesis.speak(utterance);
+        }
     }
 }
 

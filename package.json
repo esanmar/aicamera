@@ -1,0 +1,16 @@
+{
+  "name": "aicamera",
+  "version": "1.0.0",
+  "description": "Spanish Conversational AI Camera",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
